@@ -8,7 +8,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Standard Vercel + Neon Env Variable
-DATABASE_URL = os.getenv("DATABASE_URL")
+# Updated to support Vercel's default auto-injected variable names
+DATABASE_URL = os.getenv("DATABASE_URL") or os.getenv("POSTGRES_URL")
 
 def get_db_connection():
     """
