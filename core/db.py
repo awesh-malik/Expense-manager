@@ -7,20 +7,25 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Standard Vercel + Neon Env Variable
-# Updated to support Vercel's default auto-injected variable names
-DATABASE_URL = os.getenv("DATABASE_URL") or os.getenv("POSTGRES_URL")
+# --- FIX START ---
+# Vercel Storage uses POSTGRES_URL. We fallback to DATABASE_URL just in case.
+# We also enforce SSL mode which is required for Neon.
+DB_URL = os.getenv("POSTGRES_URL") or os.getenv("DATABASE_URL")
+
+if not DB_URL:
+    logger.error("❌ DATABASE ERROR: No 'POSTGRES_URL' or 'DATABASE_URL' found in Environment Variables.")
 
 def get_db_connection():
-    """
-    Establishes a connection to Neon PostgreSQL.
-    """
     try:
-        conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+        # We explicitly pass the DSN (Data Source Name)
+        # sslmode='require' is often needed for cloud DBs
+        conn = psycopg2.connect(DB_URL, cursor_factory=RealDictCursor, sslmode='require')
         return conn
     except Exception as e:
         logger.error(f"DB Connection Failed: {e}")
+        # Re-raising allows Vercel logs to catch the specific error
         raise e
+# --- FIX END ---
 
 def init_db():
     """
